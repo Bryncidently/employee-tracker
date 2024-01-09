@@ -3,12 +3,6 @@ const inquirer = require('inquirer');
 
 const connection = require('./db/connector.js');
 
-connection.connect((err) => {
-  if (err) throw err;
-  console.log("Database connected.");
-  emp_tracker();
-});
-
 var emp_tracker = function () {
 inquirer
   .prompt([
@@ -75,7 +69,7 @@ inquirer
         ])
         .then((choice) => {
           connection.query(
-            `INSERT INTO departments (name) VALUES (?)`,
+            `INSERT INTO departments (department_name) VALUES (?)`,
             [choice.department],
             (err, result) => {
               if (err) throw err;
@@ -129,7 +123,7 @@ inquirer
                 return array;
               },
             },
-          ])
+         ])
       
           .then((choice) => {
             for (var i = 0; i < result.length; i++) {
@@ -139,8 +133,8 @@ inquirer
             }
 
             connection.query(
-              `INSERT INTO roles (title, salary, id) VALUES (?, ?, ?)`,
-              [choice.title, choice.salary, department.id],
+              `INSERT INTO roles (title, salary, department) VALUES (?, ?, ?)`,
+              [choice.title, choice.salary, choice.department],
               (err, result) => {
                 if (err) throw err;
                 console.log(`Added ${choice.title}.`);
@@ -230,67 +224,48 @@ inquirer
             );
           });
       });
-    
+
     } else if (choice.prompt === "Update Employee Title") {
-      connection.query(`SELECT * FROM employees, roles`, (err, result) => {
-        if (err) throw err;
-   
-        inquirer
-          .prompt([
+        connection.query(`SELECT * FROM employees`, (err, result) => {
+          if (err) throw err;
+      
+          inquirer.prompt([
             {
               type: "list",
               name: "employee",
               message: "What employee needs to be updated?",
-              choices: () => {
-                var array = [];
-                for (var i = 0; i < result.length; i++) {
-                  array.push(result[i].last_name);
-                }
-                var employeeList = [...new Set(array)];
-                return employeeList;
-              },
-            },
-            {
-              type: "list",
-              name: "role",
-              message: "Enter the employee's new title",
-              choices: () => {
-                var array = [];
-                for (var i = 0; i < result.length; i++) {
-                  array.push(result[i].title);
-                }
-                var newArray = [...new Set(array)];
-                return newArray;
-              },
+              choices: result.map((employee) => `${employee.first_name} ${employee.last_name}`),
             },
           ])
-        
-          .then((choice) => {
-            for (var i = 0; i < result.length; i++) {
-              if (result[i].last_name === choice.employee) {
-                var name = result[i];
-              }
-            }
-
-            for (var i = 0; i < result.length; i++) {
-              if (result[i].title === choice.title) {
-                var title = result[i];
-              }
-            }
-
-            connection.query(
-              `UPDATE employees SET ? WHERE ?`,
-              [{ roles: title }, { last_name: name }],
-              (err, result) => {
-                if (err) throw err;
-                console.log(
-                  `Updated ${choice.employee}.`
+          .then((employeeChoice) => {
+            const [firstName, lastName] = employeeChoice.employee.split(' ');
+      
+            connection.query(`SELECT * FROM roles`, (err, result) => {
+              if (err) throw err;
+      
+              inquirer.prompt([
+                {
+                  type: "list",
+                  name: "title",
+                  message: "Enter the employee's new title",
+                  choices: result.map((role) => role.title),
+                },
+              ])
+              .then((titleChoice) => {
+                connection.query(
+                  `UPDATE employees SET title = ? WHERE first_name = ? AND last_name = ?`,
+                  [titleChoice.title, firstName, lastName],
+                  (err, result) => {
+                    if (err) throw err;
+                    console.log(`Updated ${employeeChoice.employee}'s title.`);
+                    emp_tracker();
+                  }
                 );
-                emp_tracker();
-              }
-            );
+              });
+            });
           });
-      });
+        });
+      
     
     } else if (choice.prompt === "Done!") {
       connection.end();
@@ -299,6 +274,11 @@ inquirer
   });
 };
 
+connection.connect((err) => {
+  if (err) throw err;
+  console.log("Database connected.");
+  emp_tracker();
+});
 
 
 
