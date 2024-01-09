@@ -1,5 +1,7 @@
 # Employee Tracker 
-  
+
+## Video
+  https://drive.google.com/file/d/1Bq-SzAAYeFETiNX9wnwO7-6VCucDn5Bx/view?usp=sharing
 
 ## Description
 As a business owner I want to be able to view and manage the departments, roles, and employees in my company
