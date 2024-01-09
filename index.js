@@ -79,71 +79,126 @@ inquirer
           );
         });
       
-    } else if (choice.prompt === "Add Title") {
-      connection.query(`SELECT * FROM departments`, (err, result) => {
-        if (err) throw err;
+    // } else if (choice.prompt === "Add Title") {
+    //   connection.query(`SELECT * FROM departments`, (err, result) => {
+    //     if (err) throw err;
         
-        inquirer
-          .prompt([
-            {
-              type: "input",
-              name: "title",
-              message: "What new title would you like to add?",
-              validate: (newTitle) => {
-                if (newTitle) {
-                  return true;
-                } else {
-                  console.log("You still haven't added a title...");
-                  return false;
-                }
-              },
-            },
-            {
-              type: "input",
-              name: "salary",
-              message: "What is the salary of the new role?",
-              validate: (newSalary) => {
-                if (newSalary) {
-                  return true;
-                } else {
-                  console.log("Are they working for free? Add a salary!");
-                  return false;
-                }
-              },
-            },
-            {
-              type: "list",
-              name: "department",
-              message: "What department is the new role in?",
-              choices: () => {
-                var array = [];
-                for (var i = 0; i < result.length; i++) {
-                  array.push(result[i].name);
-                }
-                return array;
-              },
-            },
-         ])
+    //     inquirer
+    //       .prompt([
+    //         {
+    //           type: "input",
+    //           name: "title",
+    //           message: "What new title would you like to add?",
+    //           validate: (newTitle) => {
+    //             if (newTitle) {
+    //               return true;
+    //             } else {
+    //               console.log("You still haven't added a title...");
+    //               return false;
+    //             }
+    //           },
+    //         },
+    //         {
+    //           type: "input",
+    //           name: "salary",
+    //           message: "What is the salary of the new role?",
+    //           validate: (newSalary) => {
+    //             if (newSalary) {
+    //               return true;
+    //             } else {
+    //               console.log("Are they working for free? Add a salary!");
+    //               return false;
+    //             }
+    //           },
+    //         },
+    //         {
+    //           type: "list",
+    //           name: "department",
+    //           message: "What department is the new role in?",
+    //           choices: () => {
+    //             var array = [];
+    //             for (var i = 0; i < result.length; i++) {
+    //               array.push(result[i].name);
+    //             }
+    //             return array;
+    //           },
+    //         },
+    //      ])
       
-          .then((choice) => {
-            for (var i = 0; i < result.length; i++) {
-              if (result[i].name === choice.department) {
-                var department = result[i];
-              }
-            }
+    //       .then((choice) => {
+    //         for (var i = 0; i < result.length; i++) {
+    //           if (result[i].name === choice.department) {
+    //             var department = result[i];
+    //           }
+    //         }
 
-            connection.query(
-              `INSERT INTO roles (title, salary, department) VALUES (?, ?, ?)`,
-              [choice.title, choice.salary, choice.department],
-              (err, result) => {
-                if (err) throw err;
-                console.log(`Added ${choice.title}.`);
-                emp_tracker();
-              }
-            );
-          });
-      });
+    //         connection.query(
+    //           `INSERT INTO roles (title, salary, department) VALUES (?, ?, ?)`,
+    //           [choice.title, choice.salary, choice.department],
+    //           (err, result) => {
+    //             if (err) throw err;
+    //             console.log(`Added ${choice.title}.`);
+    //             emp_tracker();
+    //           }
+    //         );
+    //       });
+    //   });
    
+// ...
+
+ } else if (choice.prompt === "Add Title") {
+  connection.query(`SELECT * FROM departments`, (err, result) => {
+    if (err) throw err;
+
+    inquirer.prompt([
+      {
+        type: "input",
+        name: "title",
+        message: "What new title would you like to add?",
+        validate: (newTitle) => {
+          if (newTitle) {
+            return true;
+          } else {
+            console.log("You still haven't added a title...");
+            return false;
+          }
+        },
+      },
+      {
+        type: "input",
+        name: "salary",
+        message: "What is the salary of the new role?",
+        validate: (newSalary) => {
+          if (newSalary) {
+            return true;
+          } else {
+            console.log("Are they working for free? Add a salary!");
+            return false;
+          }
+        },
+      },
+      {
+        type: "list",
+        name: "department",
+        message: "What department is the new role in?",
+        choices: result.map((dept) => dept.department_name),
+      },
+    ])
+    .then((choice) => {
+      connection.query(
+        `INSERT INTO roles (title, salary, department) VALUES (?, ?, ?)`,
+        [choice.title, choice.salary, choice.department],
+        (err, result) => {
+          if (err) throw err;
+          console.log(`Added ${choice.title}.`);
+          emp_tracker();
+        }
+      );
+    });
+  });
+
+
+
     } else if (choice.prompt === "Add Employee") {
       connection.query(`SELECT * FROM employees, roles`, (err, result) => {
         if (err) throw err;
