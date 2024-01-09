@@ -1,10 +1,9 @@
-
 const inquirer = require('inquirer');
-
 const connection = require('./db/connector.js');
 
 var emp_tracker = function () {
 inquirer
+//where you get to choose your action
   .prompt([
     {
         type: 'list',
@@ -25,31 +24,31 @@ inquirer
 
  
   .then((choice) => {
-   
+    //shows you the departments table
     if (choice.prompt === "View All Departments") {
       connection.query(`SELECT * FROM departments`, (err, result) => {
         if (err) throw err;
-      
         console.table(result);
         emp_tracker();
       });
       
+    //shows the titles roles table  
     } else if (choice.prompt === "View All Titles") {
       connection.query(`SELECT * FROM roles`, (err, result) => {
         if (err) throw err;
-      
         console.table(result);
         emp_tracker();
       });
-     
+    
+     //shows the employees table
     } else if (choice.prompt === "View All Employees") {
       connection.query(`SELECT * FROM employees`, (err, result) => {
         if (err) throw err;
-      
         console.table(result);
         emp_tracker();
       });
      
+    //add a new department  
     } else if (choice.prompt === "Add Department") {
       inquirer
         .prompt([
@@ -78,78 +77,11 @@ inquirer
             }
           );
         });
-      
-    // } else if (choice.prompt === "Add Title") {
-    //   connection.query(`SELECT * FROM departments`, (err, result) => {
-    //     if (err) throw err;
-        
-    //     inquirer
-    //       .prompt([
-    //         {
-    //           type: "input",
-    //           name: "title",
-    //           message: "What new title would you like to add?",
-    //           validate: (newTitle) => {
-    //             if (newTitle) {
-    //               return true;
-    //             } else {
-    //               console.log("You still haven't added a title...");
-    //               return false;
-    //             }
-    //           },
-    //         },
-    //         {
-    //           type: "input",
-    //           name: "salary",
-    //           message: "What is the salary of the new role?",
-    //           validate: (newSalary) => {
-    //             if (newSalary) {
-    //               return true;
-    //             } else {
-    //               console.log("Are they working for free? Add a salary!");
-    //               return false;
-    //             }
-    //           },
-    //         },
-    //         {
-    //           type: "list",
-    //           name: "department",
-    //           message: "What department is the new role in?",
-    //           choices: () => {
-    //             var array = [];
-    //             for (var i = 0; i < result.length; i++) {
-    //               array.push(result[i].name);
-    //             }
-    //             return array;
-    //           },
-    //         },
-    //      ])
-      
-    //       .then((choice) => {
-    //         for (var i = 0; i < result.length; i++) {
-    //           if (result[i].name === choice.department) {
-    //             var department = result[i];
-    //           }
-    //         }
-
-    //         connection.query(
-    //           `INSERT INTO roles (title, salary, department) VALUES (?, ?, ?)`,
-    //           [choice.title, choice.salary, choice.department],
-    //           (err, result) => {
-    //             if (err) throw err;
-    //             console.log(`Added ${choice.title}.`);
-    //             emp_tracker();
-    //           }
-    //         );
-    //       });
-    //   });
-   
-// ...
-
- } else if (choice.prompt === "Add Title") {
+     
+  //add new title with salary and department
+  } else if (choice.prompt === "Add Title") {
   connection.query(`SELECT * FROM departments`, (err, result) => {
     if (err) throw err;
-
     inquirer.prompt([
       {
         type: "input",
@@ -197,93 +129,77 @@ inquirer
     });
   });
 
+//add new employee  
+} else if (choice.prompt === "Add Employee") {
+  connection.query(`SELECT * FROM roles`, (err, result) => {
+    if (err) throw err;
+    inquirer.prompt([
+      {
+        type: "input",
+        name: "firstName",
+        message: "What is the employee's first name?",
+        validate: (firstNameInput) => {
+          if (firstNameInput) {
+            return true;
+          } else {
+            console.log("Add a first name!");
+            return false;
+          }
+        },
+      },
+      {
+        type: "input",
+        name: "lastName",
+        message: "What is the employee's last name?",
+        validate: (lastNameInput) => {
+          if (lastNameInput) {
+            return true;
+          } else {
+            console.log("Add a last name!");
+            return false;
+          }
+        },
+      },
+      {
+        type: "list",
+        name: "title",
+        message: "What is the employee's title?",
+        choices: result.map((role) => role.title),
+      },
+      {
+        type: "input",
+        name: "manager",
+        message: "Enter the manager's name.",
+        validate: (managerName) => {
+          if (managerName) {
+            return true;
+          } else {
+            console.log("Add a manager!");
+            return false;
+          }
+        },
+      },
+    ])
+    .then((choice) => {
+      const selectedRole = result.find((role) => role.title === choice.title);
+      const department = selectedRole ? selectedRole.department : null;
+      const salary = selectedRole ? selectedRole.salary : null;
 
-
-    } else if (choice.prompt === "Add Employee") {
-      connection.query(`SELECT * FROM employees, roles`, (err, result) => {
-        if (err) throw err;
-       
-        inquirer
-          .prompt([
-            {
-              type: "input",
-              name: "firstName",
-              message: "What is the employee's first name?",
-              validate: (firstNameInput) => {
-                if (firstNameInput) {
-                  return true;
-                } else {
-                  console.log("Add a first name!");
-                  return false;
-                }
-              },
-            },
-            {
-              type: "input",
-              name: "lastName",
-              message: "What is the employee's last name?",
-              validate: (lastNameInput) => {
-                if (lastNameInput) {
-                  return true;
-                } else {
-                  console.log("Add a last name!");
-                  return false;
-                }
-              },
-            },
-            {
-              type: "list",
-              name: "title",
-              message: "What is the employee's title?",
-              choices: () => {
-                var array = [];
-                for (var i = 0; i < result.length; i++) {
-                  array.push(result[i].title);
-                }
-                var newArray = [...new Set(array)];
-                return newArray;
-              },
-            },
-            {
-              type: "input",
-              name: "manager",
-              message: "Enter the manager's name.",
-              validate: (managerName) => {
-                if (managerName) {
-                  return true;
-                } else {
-                  console.log("Add a manager!");
-                  return false;
-                }
-              },
-            },
-          ])
-         
-          .then((choice) => {
-            for (var i = 0; i < result.length; i++) {
-              if (result[i].title === choice.title) {
-                var role = result[i];
-              }
-            }
-
-            connection.query(
-              `INSERT INTO employees (first_name, last_name, title, manager) VALUES (?, ?, ?, ?)`,
-              [choice.firstName, choice.lastName, choice.title, choice.manager],
-              (err, result) => {
-                if (err) throw err;
-                console.log(
-                  `Added ${choice.firstName} ${choice.lastName}.`
-                );
-                emp_tracker();
-              }
-            );
-          });
-      });
-
+      connection.query(
+        `INSERT INTO employees (first_name, last_name, title, department, salary, manager) VALUES (?, ?, ?, ?, ?, ?)`,
+        [choice.firstName, choice.lastName, choice.title, department, salary, choice.manager],
+        (err, result) => {
+          if (err) throw err;
+          console.log(`Added ${choice.firstName} ${choice.lastName}.`);
+          emp_tracker();
+        }
+      );
+    });
+  });
+ //update employee title
     } else if (choice.prompt === "Update Employee Title") {
         connection.query(`SELECT * FROM employees`, (err, result) => {
           if (err) throw err;
-      
           inquirer.prompt([
             {
               type: "list",
@@ -294,10 +210,8 @@ inquirer
           ])
           .then((employeeChoice) => {
             const [firstName, lastName] = employeeChoice.employee.split(' ');
-      
             connection.query(`SELECT * FROM roles`, (err, result) => {
               if (err) throw err;
-      
               inquirer.prompt([
                 {
                   type: "list",
@@ -320,8 +234,7 @@ inquirer
             });
           });
         });
-      
-    
+  //you out!    
     } else if (choice.prompt === "Done!") {
       connection.end();
       console.log("Byeeeeeeee!");
